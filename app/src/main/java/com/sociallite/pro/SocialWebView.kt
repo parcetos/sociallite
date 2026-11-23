@@ -55,7 +55,7 @@ fun SocialWebView(
                 ViewGroup.LayoutParams.MATCH_PARENT
             )
 
-            settings.apply {
+            this.settings.apply {
                 javaScriptEnabled = true
                 domStorageEnabled = true
                 databaseEnabled = true

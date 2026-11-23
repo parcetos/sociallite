@@ -1,81 +1,56 @@
 package com.sociallite.pro
 
-import android.net.Uri
-import androidx.compose.ui.graphics.Color
-
 enum class SocialPlatform(
-    val id: String,
-    val displayName: String,
+    val title: String,
     val homeUrl: String,
     val dmUrl: String,
-    val accentColor: Color,
-    val hostDomains: List<String>
+    val allowedHosts: List<String>
 ) {
     INSTAGRAM(
-        id = "instagram",
-        displayName = "Instagram",
+        title = "Instagram",
         homeUrl = "https://www.instagram.com/",
         dmUrl = "https://www.instagram.com/direct/inbox/",
-        accentColor = Color(0xFFE1306C),
-        hostDomains = listOf("instagram.com")
+        allowedHosts = listOf("instagram.com", "cdninstagram.com", "fbcdn.net")
     ),
     YOUTUBE(
-        id = "youtube",
-        displayName = "YouTube",
+        title = "YouTube",
         homeUrl = "https://m.youtube.com/",
         dmUrl = "https://m.youtube.com/feed/subscriptions",
-        accentColor = Color(0xFFFF0033),
-        hostDomains = listOf("youtube.com", "youtu.be")
+        allowedHosts = listOf("youtube.com", "youtu.be", "googlevideo.com", "ytimg.com", "google.com")
     ),
     X_TWITTER(
-        id = "x_twitter",
-        displayName = "X / Twitter",
+        title = "X",
         homeUrl = "https://x.com/home",
         dmUrl = "https://x.com/messages",
-        accentColor = Color(0xFF1D9BF0),
-        hostDomains = listOf("x.com", "twitter.com")
+        allowedHosts = listOf("x.com", "twitter.com", "twimg.com")
     ),
     FACEBOOK(
-        id = "facebook",
-        displayName = "Facebook",
+        title = "Facebook",
         homeUrl = "https://m.facebook.com/",
         dmUrl = "https://m.facebook.com/messages/",
-        accentColor = Color(0xFF1877F2),
-        hostDomains = listOf("facebook.com", "fb.com", "fb.watch")
-    ),
-    REDDIT(
-        id = "reddit",
-        displayName = "Reddit",
-        homeUrl = "https://www.reddit.com/",
-        dmUrl = "https://www.reddit.com/message/inbox/",
-        accentColor = Color(0xFFFF4500),
-        hostDomains = listOf("reddit.com")
+        allowedHosts = listOf("facebook.com", "fbcdn.net", "messenger.com")
     );
 
     companion object {
         fun fromUrl(url: String): SocialPlatform? {
-            val host = runCatching { Uri.parse(url).host?.lowercase() }.getOrNull() ?: return null
-            return entries.firstOrNull { platform ->
-                platform.hostDomains.any { domain ->
-                    host == domain || host.endsWith(".$domain")
-                }
+            val lower = url.lowercase()
+            return when {
+                lower.contains("instagram.com") -> INSTAGRAM
+                lower.contains("youtube.com") || lower.contains("youtu.be") -> YOUTUBE
+                lower.contains("x.com") || lower.contains("twitter.com") -> X_TWITTER
+                lower.contains("facebook.com") || lower.contains("fb.watch") -> FACEBOOK
+                else -> null
             }
         }
     }
 }
 
-data class PlatformFilterConfig(
-    val blockShortVideos: Boolean = true,
-    val blockExploreAndDiscovery: Boolean = true,
-    val dmOrSubscriptionsOnly: Boolean = false,
-    val blockAdsAndSuggestions: Boolean = true,
-    val grayscaleMode: Boolean = false,
-    val dailyLimitMinutes: Int = 30
-)
-
-data class SharedLinkSession(
-    val platform: SocialPlatform,
-    val targetUrl: String,
-    val normalizedPath: String,
-    val lockVerticalScroll: Boolean
+data class FilterSettings(
+    val blockReelsFeed: Boolean = true,
+    val blockShortsFeed: Boolean = true,
+    val allowSingleSharedLinks: Boolean = true,
+    val blockExploreAndSuggested: Boolean = true,
+    val blockStories: Boolean = false,
+    val dailyLimitMinutes: Int = 45,
+    val enforceDailyLimit: Boolean = false
 )

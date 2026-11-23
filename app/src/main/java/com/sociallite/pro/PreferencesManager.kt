@@ -2,81 +2,67 @@ package com.sociallite.pro
 
 import android.content.Context
 import android.content.SharedPreferences
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 import java.time.LocalDate
 
 class PreferencesManager(context: Context) {
-
     private val prefs: SharedPreferences =
         context.getSharedPreferences("sociallite_pro_prefs", Context.MODE_PRIVATE)
 
-    private val _configs = MutableStateFlow(loadAllConfigs())
-    val configs: StateFlow<Map<SocialPlatform, PlatformFilterConfig>> = _configs.asStateFlow()
-
-    private val _usageSeconds = MutableStateFlow(loadAllUsageSeconds())
-    val usageSeconds: StateFlow<Map<SocialPlatform, Int>> = _usageSeconds.asStateFlow()
-
-    private fun todayKey(): String = LocalDate.now().toString()
-
-    private fun ensureDateReset() {
-        val savedDate = prefs.getString("usage_date", null)
-        val today = todayKey()
-        if (savedDate != today) {
-            val editor = prefs.edit().putString("usage_date", today)
-            SocialPlatform.entries.forEach { platform ->
-                editor.putInt("usage_${platform.id}", 0)
-            }
-            editor.apply()
-            _usageSeconds.value = SocialPlatform.entries.associateWith { 0 }
-        }
+    fun loadSettings(): FilterSettings {
+        return FilterSettings(
+            blockReelsFeed = prefs.getBoolean("block_reels_feed", true),
+            blockShortsFeed = prefs.getBoolean("block_shorts_feed", true),
+            allowSingleSharedLinks = prefs.getBoolean("allow_single_shared", true),
+            blockExploreAndSuggested = prefs.getBoolean("block_explore", true),
+            blockStories = prefs.getBoolean("block_stories", false),
+            dailyLimitMinutes = prefs.getInt("daily_limit_minutes", 45),
+            enforceDailyLimit = prefs.getBoolean("enforce_daily_limit", false)
+        )
     }
 
-    private fun loadAllConfigs(): Map<SocialPlatform, PlatformFilterConfig> {
-        return SocialPlatform.entries.associateWith { platform ->
-            val p = platform.id
-            PlatformFilterConfig(
-                blockShortVideos = prefs.getBoolean("${p}_block_shorts", true),
-                blockExploreAndDiscovery = prefs.getBoolean("${p}_block_explore", true),
-                dmOrSubscriptionsOnly = prefs.getBoolean("${p}_dm_only", false),
-                blockAdsAndSuggestions = prefs.getBoolean("${p}_block_ads", true),
-                grayscaleMode = prefs.getBoolean("${p}_grayscale", false),
-                dailyLimitMinutes = prefs.getInt("${p}_limit_min", 30)
-            )
-        }
-    }
-
-    private fun loadAllUsageSeconds(): Map<SocialPlatform, Int> {
-        ensureDateReset()
-        return SocialPlatform.entries.associateWith { platform ->
-            prefs.getInt("usage_${platform.id}", 0)
-        }
-    }
-
-    fun updateConfig(platform: SocialPlatform, transform: (PlatformFilterConfig) -> PlatformFilterConfig) {
-        val current = _configs.value[platform] ?: PlatformFilterConfig()
-        val updated = transform(current)
-        val p = platform.id
-
+    fun saveSettings(settings: FilterSettings) {
         prefs.edit()
-            .putBoolean("${p}_block_shorts", updated.blockShortVideos)
-            .putBoolean("${p}_block_explore", updated.blockExploreAndDiscovery)
-            .putBoolean("${p}_dm_only", updated.dmOrSubscriptionsOnly)
-            .putBoolean("${p}_block_ads", updated.blockAdsAndSuggestions)
-            .putBoolean("${p}_grayscale", updated.grayscaleMode)
-            .putInt("${p}_limit_min", updated.dailyLimitMinutes)
+            .putBoolean("block_reels_feed", settings.blockReelsFeed)
+            .putBoolean("block_shorts_feed", settings.blockShortsFeed)
+            .putBoolean("allow_single_shared", settings.allowSingleSharedLinks)
+            .putBoolean("block_explore", settings.blockExploreAndSuggested)
+            .putBoolean("block_stories", settings.blockStories)
+            .putInt("daily_limit_minutes", settings.dailyLimitMinutes)
+            .putBoolean("enforce_daily_limit", settings.enforceDailyLimit)
             .apply()
-
-        _configs.update { it + (platform to updated) }
     }
 
-    fun incrementUsageSecond(platform: SocialPlatform) {
-        ensureDateReset()
-        val current = _usageSeconds.value[platform] ?: 0
-        val next = current + 1
-        prefs.edit().putInt("usage_${platform.id}", next).apply()
-        _usageSeconds.update { it + (platform to next) }
+    fun getBlockedCount(): Int {
+        resetIfNewDay()
+        return prefs.getInt("blocked_count", 0)
+    }
+
+    fun incrementBlockedCount(delta: Int = 1) {
+        resetIfNewDay()
+        val current = prefs.getInt("blocked_count", 0)
+        prefs.edit().putInt("blocked_count", current + delta).apply()
+    }
+
+    fun getMinutesUsedToday(): Int {
+        resetIfNewDay()
+        return prefs.getInt("minutes_used_today", 0)
+    }
+
+    fun addMinuteUsed() {
+        resetIfNewDay()
+        val current = prefs.getInt("minutes_used_today", 0)
+        prefs.edit().putInt("minutes_used_today", current + 1).apply()
+    }
+
+    private fun resetIfNewDay() {
+        val today = LocalDate.now().toString()
+        val savedDate = prefs.getString("last_date", "")
+        if (savedDate != today) {
+            prefs.edit()
+                .putString("last_date", today)
+                .putInt("blocked_count", 0)
+                .putInt("minutes_used_today", 0)
+                .apply()
+        }
     }
 }

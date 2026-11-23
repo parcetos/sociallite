@@ -6,17 +6,18 @@
 
     <application
         android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
-        android:roundIcon="@mipmap/ic_launcher_round"
+        android:icon="@drawable/ic_launcher_foreground"
+        android:roundIcon="@drawable/ic_launcher_foreground"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:theme="@android:style/Theme.Material.NoActionBar"
+        android:theme="@style/Theme.SocialLitePro"
         android:usesCleartextTraffic="false">
 
         <activity
             android:name=".MainActivity"
             android:exported="true"
             android:launchMode="singleTask"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
             android:windowSoftInputMode="adjustResize">
 
             <intent-filter>
@@ -24,22 +25,21 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-            <!-- Android Share Sheet receiver for Single-Link Safe Mode -->
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="text/plain" />
             </intent-filter>
 
-            <!-- Direct Deep Link Interception -->
-            <intent-filter android:autoVerify="false">
+            <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-
                 <data android:scheme="https" />
+                <data android:scheme="http" />
                 <data android:host="instagram.com" />
                 <data android:host="www.instagram.com" />
+                <data android:host="m.instagram.com" />
                 <data android:host="youtube.com" />
                 <data android:host="www.youtube.com" />
                 <data android:host="m.youtube.com" />
@@ -48,15 +48,11 @@
                 <data android:host="www.x.com" />
                 <data android:host="twitter.com" />
                 <data android:host="www.twitter.com" />
-                <data android:host="mobile.twitter.com" />
-                <data android:host="m.facebook.com" />
-                <data android:host="www.facebook.com" />
                 <data android:host="facebook.com" />
-                <data android:host="fb.watch" />
-                <data android:host="reddit.com" />
-                <data android:host="www.reddit.com" />
-                <data android:host="old.reddit.com" />
+                <data android:host="www.facebook.com" />
+                <data android:host="m.facebook.com" />
             </intent-filter>
         </activity>
+
     </application>
 </manifest>
